@@ -28,17 +28,7 @@ This workflow automatically extracts expense details from incoming SMS messages 
 
 ---
 
-## 🧠 Workflow Overview
-
-| Step | Node | Purpose |
-|------|------|----------|
-| 1️⃣ | **Webhook** | Receives SMS data (`/webhook/onsms`) |
-| 2️⃣ | **AI Agent (LangChain)** | Extracts and structures expense details |
-| 3️⃣ | **If Node** | Checks if it’s a valid expense |
-| 4️⃣ | **Google Sheets Node** | Appends entry if valid |
-| 5️⃣ | **Gmail Node** | Sends email confirmation |
-| 6️⃣ | **Discord Node** | Sends DM with details and links |
-| 7️⃣ | **Else Path** | Notifies for non-expense messages |
+<img width="1496" height="587" alt="image" src="https://github.com/user-attachments/assets/d1db110e-1c54-4526-b6d3-31bea4b6b660" />
 
 ---
 
