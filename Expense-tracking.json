@@ -1,0 +1,531 @@
+{
+  "name": "Expense-tracking",
+  "nodes": [
+    {
+      "parameters": {
+        "multipleMethods": true,
+        "httpMethod": [
+          "POST"
+        ],
+        "path": "onsms",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        -64
+      ],
+      "id": "e948fd74-a3ee-4764-9882-8b248014da64",
+      "name": "Webhook",
+      "webhookId": "d63146e8-2204-40ce-9f59-7963867a447a"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an expense manager, read the messages recieved and extract and process the expense/income details. Extract and process the details and categorize the expense. Do not add the Exepnse ID, it will be auto added by the sheet formula. Update the new record/row accordingly. Choose from the following list of categories:\nBills/Payments, Category, Entertainment, Food, Groceries, Personal Care, Rent, Shopping, Misc \nUpdate the is IsExpense to true if the message is an expense related message Look for Words like Debited, spent, transaction processed, etc. else set it to false.\nIgnore OTP related messages and set it false"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        368,
+        96
+      ],
+      "id": "7914941b-d66f-43f8-999f-366dad2927d0",
+      "name": "AI Agent",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "model": "deepseek/deepseek-chat-v3.1:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        288,
+        416
+      ],
+      "id": "e2a1204d-f5b6-468a-ad16-553fe091307f",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "9Ccvrr0rYk1qE7pb",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $now }}",
+        "contextWindowLength": 10000
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        448,
+        416
+      ],
+      "id": "1eb6a90d-9d31-40a3-9cf2-97cb551fe093",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"data\": {\n  \"Expense ID\": 1,\n  \"Expense Name\": \"Lunch\",\n  \"Expense Value\": 60,\n  \"Date\": \"2025-06-30\",\n  \"Running Total\": 60,\n  \"Category\": \"Food\"\n  },\n\"IsExpense\": true\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        624,
+        416
+      ],
+      "id": "7436a435-0ed5-401b-a6db-8bc710c16dcb",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1CE224jPTcmdonzeQ0LOv1sjzY4kWdXwSAlcuaojRTrE",
+          "mode": "list",
+          "cachedResultName": "Monthly Expenses",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1CE224jPTcmdonzeQ0LOv1sjzY4kWdXwSAlcuaojRTrE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1CE224jPTcmdonzeQ0LOv1sjzY4kWdXwSAlcuaojRTrE/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Expense Name": "={{ $json.output.data['Expense Name'] }}",
+            "Date": "={{ $json.output.data.Date }}",
+            "Category": "={{ $json.output.data.Category }}",
+            "Expense Value ": "={{ $json.output.data['Expense Value'] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Exepnse ID ",
+              "displayName": "Exepnse ID ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Expense Name",
+              "displayName": "Expense Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Expense Value ",
+              "displayName": "Expense Value ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Running Total",
+              "displayName": "Running Total",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1200,
+        96
+      ],
+      "id": "789155b3-1e26-4dd8-97f4-31b583331e82",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleApi": {
+          "id": "eAr1ZtN55oZUndll",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "86237524-80a0-40e6-a5f6-f5208080776f",
+              "leftValue": "={{ $json.output.IsExpense }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        112
+      ],
+      "id": "0d88d6ce-4cb5-47c3-a513-74196bae24d3",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "sendTo": "prathampote33@gmail.com",
+        "subject": "Exepnse Added ",
+        "message": "=Your Expense has been added to the sheet:\nExpense Name: {{ $json['Expense Name'] }}\nValue: {{ $json['Expense Value '] }}\nCategory: {{ $json.Category }}\nDate: {{ $json.Date }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1648,
+        96
+      ],
+      "id": "14bc58bd-716c-40b7-91f0-0d95cf3d68e0",
+      "name": "Send a message",
+      "webhookId": "107ab4c6-b4f9-4502-9dfd-b2159e844cee",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9DWrivIWFYzIr3pd",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1201914241724981259",
+          "mode": "list",
+          "cachedResultName": "ORevatoviDes's server",
+          "cachedResultUrl": "https://discord.com/channels/1201914241724981259"
+        },
+        "sendTo": "user",
+        "userId": {
+          "__rl": true,
+          "value": "1201913569751605268",
+          "mode": "list",
+          "cachedResultName": "orevatovides"
+        },
+        "content": "=HI, your expense has been recorded and added to the sheet. Here's the details:\nExpense Name: {{ $json[\"Expense Name\"] }}\nValue: {{ $json[\"Expense Value \"] }}\nDate: {{ $json.Date }}\nCategory: {{ $json.Category }}\nLink to your expense sheet: Link",
+        "options": {},
+        "embeds": {
+          "values": [
+            {
+              "description": "Link to sheet",
+              "title": "Link",
+              "url": "https://docs.google.com/spreadsheets/d/1CE224jPTcmdonzeQ0LOv1sjzY4kWdXwSAlcuaojRTrE/edit?usp=sharing"
+            },
+            {
+              "description": "Link to sheet app",
+              "title": "app link",
+              "url": "https://www.appsheet.com/start/4e4e536d-0581-499f-ad59-794408be2110"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        1648,
+        304
+      ],
+      "id": "fa71e2fd-98ed-4f4f-aee2-ad250bfbb68e",
+      "name": "Send a message1",
+      "webhookId": "cefb5178-2d2d-4b5e-880e-f1662e6d5b24",
+      "credentials": {
+        "discordOAuth2Api": {
+          "id": "W7OR9qndKLNVe6wG",
+          "name": "Discord account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1201914241724981259",
+          "mode": "list",
+          "cachedResultName": "ORevatoviDes's server",
+          "cachedResultUrl": "https://discord.com/channels/1201914241724981259"
+        },
+        "sendTo": "user",
+        "userId": {
+          "__rl": true,
+          "value": "1201913569751605268",
+          "mode": "list",
+          "cachedResultName": "orevatovides"
+        },
+        "content": "A Message was read and marked as non expense Entry, pls review the last execution to review and retry.",
+        "options": {},
+        "embeds": {
+          "values": [
+            {
+              "description": "Link to n8n executions",
+              "title": "Executions",
+              "url": "https://n8n.crayfish-snares.ts.net/projects/JHUcyOHA41f2NazF/executions"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        496
+      ],
+      "id": "ee98628e-9445-4355-b9e3-cc90a38c4f65",
+      "name": "Send a message2",
+      "webhookId": "3c03977b-c819-4938-86cf-06bf7b4fef75",
+      "credentials": {
+        "discordOAuth2Api": {
+          "id": "W7OR9qndKLNVe6wG",
+          "name": "Discord account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 1
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1408,
+        272
+      ],
+      "id": "1ebc0bae-dc82-44f1-96d9-887f9dd864e7",
+      "name": "Wait",
+      "webhookId": "96db2cad-adba-491d-98d6-85fe0d4f7bf7"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        928,
+        304
+      ],
+      "id": "a0913306-6a1f-4712-b132-d90a4215217f",
+      "name": "Wait1",
+      "webhookId": "e1cca082-4494-401c-a82d-b5b97525078e"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "n8n.crayfish-snares.ts.net",
+            "user-agent": "Tasker/6.5.11 (Android/16)",
+            "content-length": "301",
+            "accept": "Application/Json",
+            "accept-encoding": "gzip",
+            "content-type": "application/json",
+            "x-forwarded-for": "100.88.127.110",
+            "x-forwarded-host": "n8n.crayfish-snares.ts.net",
+            "x-forwarded-proto": "https"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "text": "Hi, we have processed Rs. 349.0 for your Airtel Mobile 9886564443. The payment will be updated within 15 minutes. Please keep your order ID 7381322945318604800 for future reference. Track your payment status via  https://i.airtel.in/Recharge-Bills",
+            "from": "AX-AIRINF",
+            "date": "10-7-25",
+            "additional_kwargs": {},
+            "response_metadata": {}
+          },
+          "webhookUrl": "https://n8n.crayfish-snares.ts.net/webhook/onsms",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "dac6439d-4331-46f4-bb8b-2219396b23f7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "20e91a9ba132607dec66b08014047ba8f9b5c00298faccb1718d42152886bd2e"
+  },
+  "id": "toyZoECTC6iGp5OV",
+  "tags": []
+}
